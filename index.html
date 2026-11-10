@@ -107,6 +107,9 @@
   .passos li { margin-bottom:10px; font-size:.92rem; }
   .passos b { color:var(--fg); }
 
+  /* hidden tem que vencer os display:flex/grid abaixo (senão a tela de login não some apos entrar) */
+  [hidden]{ display:none !important; }
+
   /* Login (nuvem Softia) */
   .loginwrap{ position:fixed; inset:0; z-index:100; background:var(--bg); display:flex; align-items:center; justify-content:center;
               padding:20px max(16px,env(safe-area-inset-left,0px)); }
