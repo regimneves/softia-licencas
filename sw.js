@@ -5,7 +5,7 @@
  * licenças sem rede nenhuma — que é o cenário real (loja do cliente, sinal ruim).
  * A rede só é consultada em segundo plano, para pegar versões novas.
  */
-const CACHE = 'softia-licencas-v1';
+const CACHE = 'softia-licencas-v5';
 const ARQUIVOS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

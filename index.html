@@ -68,22 +68,110 @@
   .hist .quando { color:var(--mut); font-size:.75rem; }
   .hist code { font-size:.72rem; color:var(--mut); word-break:break-all; }
   .hist button { width:auto; margin:6px 6px 0 0; padding:7px 12px; font-size:.78rem; }
+
+  /* Alternador de telas (Emitir / Clientes) */
+  .modes { display:flex; gap:8px; margin-bottom:14px; }
+  .modes button { margin:0; padding:12px 10px; background:var(--card); color:var(--mut);
+                  border:1px solid var(--line); font-size:.92rem; display:flex; align-items:center;
+                  justify-content:center; gap:7px; }
+  .modes button[aria-pressed="true"] { background:var(--ac); color:#fff; border-color:var(--ac); }
+  .pill { background:var(--line); color:var(--fg); border-radius:999px; font-size:.72rem;
+          font-weight:700; padding:1px 8px; min-width:20px; text-align:center; }
+  .modes button[aria-pressed="true"] .pill { background:rgba(255,255,255,.25); color:#fff; }
+
+  /* Painel de clientes */
+  .filtros { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .filtros input { flex:1; min-width:140px; }
+  .filtros select { flex:0 0 auto; width:auto; }
+  .resumo { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .resumo .chip { font-size:.78rem; padding:6px 11px; border-radius:999px; border:1px solid var(--line);
+                  background:var(--card); color:var(--mut); }
+  .resumo .chip b { color:var(--fg); }
+  .cli { list-style:none; padding:0; margin:0; }
+  .cli li { padding:13px 0; border-bottom:1px solid var(--line); }
+  .cli li:last-child { border-bottom:0; }
+  .cli .top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .cli .nome { font-weight:700; font-size:1rem; }
+  .cli .det { color:var(--mut); font-size:.82rem; margin-top:2px; }
+  .cli code { font-size:.72rem; color:var(--mut); word-break:break-all; }
+  .cli .acoes button { width:auto; margin:8px 6px 0 0; padding:7px 12px; font-size:.78rem; }
+  .selo { font-size:.72rem; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; flex:none; }
+  .selo.ok   { background:rgba(15,123,63,.14);  color:var(--ok); }
+  .selo.warn { background:rgba(163,91,0,.16);   color:var(--warn); }
+  .selo.err  { background:rgba(192,57,43,.14);  color:var(--err); }
+  .vazio { color:var(--mut); font-size:.88rem; text-align:center; padding:24px 8px; }
+
+  /* Ajuda */
+  .ajuda h2 { font-size:1.05rem; margin:0 0 2px; }
+  .passos { margin:0 0 14px; padding-left:22px; }
+  .passos li { margin-bottom:10px; font-size:.92rem; }
+  .passos b { color:var(--fg); }
+
+  /* Login (nuvem Softia) */
+  .loginwrap{ position:fixed; inset:0; z-index:100; background:var(--bg); display:flex; align-items:center; justify-content:center;
+              padding:20px max(16px,env(safe-area-inset-left,0px)); }
+  .authcard{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; width:100%; max-width:380px; box-shadow:0 10px 30px rgba(0,0,0,.12); }
+  .authcard .logo{ width:48px; height:48px; font-size:26px; }
+  .authcard label{ margin-top:12px; }
+  .resumoCloud{ font-size:.78rem; color:var(--mut); margin-bottom:8px; }
+
+  /* Editor de cliente */
+  #edOverlay{ position:fixed; inset:0; background:rgba(5,12,20,.5); display:none; align-items:flex-end; justify-content:center; z-index:80; }
+  #edOverlay.on{ display:flex; }
+  @media(min-width:640px){ #edOverlay.on{ align-items:center; } }
+  .edmodal{ background:var(--card); width:100%; max-width:520px; border-radius:16px 16px 0 0; padding:18px;
+            padding-bottom:max(18px,env(safe-area-inset-bottom,0px)); max-height:92vh; overflow:auto; }
+  @media(min-width:640px){ .edmodal{ border-radius:16px; } }
+  .edmodal h2{ font-size:1.1rem; margin:0 0 12px; }
+  .edrow{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  /* Toast */
+  .toast{ position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%) translateY(16px);
+          background:var(--noite); color:#fff; padding:11px 16px; border-radius:10px; font-size:.85rem; z-index:120;
+          opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; max-width:90%; text-align:center; }
+  .toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
+<div id="login" class="loginwrap">
+  <div class="authcard">
+    <div class="logo" style="margin:0 auto 12px">S</div>
+    <h1 style="text-align:center;font-size:1.2rem;margin:0 0 4px">Licenças Softia</h1>
+    <p class="sub" id="loginMsg" style="text-align:center;margin:0 0 6px">Entre para emitir licenças e ver seus clientes</p>
+    <label for="liEmail">E-mail</label>
+    <input id="liEmail" type="email" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="voce@email.com">
+    <label for="liSenha">Senha</label>
+    <input id="liSenha" type="password" placeholder="sua senha">
+    <button id="liEntrar">Entrar</button>
+    <button id="liCriar" class="sec">Primeiro acesso — criar senha</button>
+    <div id="liMsg" class="err" style="text-align:center"></div>
+  </div>
+</div>
 <div class="wrap">
-  <header>
+  <header style="display:flex;align-items:center;gap:10px">
     <div class="logo">S</div>
-    <div>
-      <h1>Gerador de Licenças</h1>
-      <p class="sub" style="margin:0">Softia · funciona offline · nada sai deste aparelho</p>
+    <div style="min-width:0;flex:1">
+      <h1>Licenças Softia</h1>
+      <p class="sub" id="hsub" style="margin:0">Emissão + controle · sincronizado na nuvem</p>
     </div>
+    <button class="sec" id="btnSair" hidden style="width:auto;margin:0;padding:8px 12px;font-size:.8rem;white-space:nowrap">Sair</button>
   </header>
 
+  <div class="modes" id="modes">
+    <button type="button" data-mode="emitir" aria-pressed="true">Emitir</button>
+    <button type="button" data-mode="clientes" aria-pressed="false">Clientes <span class="pill" id="pillCli">0</span></button>
+    <button type="button" data-mode="ajuda" aria-pressed="false">Ajuda</button>
+  </div>
+
+  <section id="viewEmitir">
   <div class="tabs" id="tabs">
     <button type="button" data-p="aquagest" aria-pressed="true">AquaGest</button>
     <button type="button" data-p="gymgest" aria-pressed="false">GymGest</button>
     <button type="button" data-p="iadent" aria-pressed="false">IADent</button>
+    <button type="button" data-p="repgest" aria-pressed="false">RepGest</button>
+    <button type="button" data-p="fitgest" aria-pressed="false">FitGest</button>
+    <button type="button" data-p="vendasgest" aria-pressed="false">VendasGest</button>
   </div>
 
   <div class="card">
@@ -101,6 +189,9 @@
   </div>
 
   <div class="card">
+    <label for="nome">Nome do cliente</label>
+    <input id="nome" placeholder="ex.: Loja do Celio / Mota & Mota" autocapitalize="words" autocorrect="off" spellcheck="false">
+
     <label for="hw">Hardware ID do cliente</label>
     <input id="hw" placeholder="cole o ID ou leia o QR da tela" autocapitalize="off" autocorrect="off" spellcheck="false">
     <button type="button" class="sec" id="lerqr">📷 Ler QR da tela do cliente</button>
@@ -143,6 +234,99 @@
       <ul id="lista"></ul>
       <button class="sec" id="limpar">Limpar histórico</button>
     </details>
+  </div>
+  </section>
+
+  <section id="viewClientes" hidden>
+    <div class="card">
+      <div class="filtros">
+        <input id="busca" placeholder="Buscar nome, produto, cidade…" autocapitalize="off" spellcheck="false">
+        <select id="filtroProduto"><option value="">Todos produtos</option></select>
+        <select id="filtroStatus">
+          <option value="todos">Todos</option>
+          <option value="vencido">Vencidos</option>
+          <option value="vencendo">Vencendo</option>
+          <option value="ativo">Ativos</option>
+          <option value="semdata">Sem data</option>
+        </select>
+        <button id="novoCli" style="width:auto;margin:0;padding:10px 14px">+ Novo</button>
+      </div>
+      <div class="resumo" id="resumo"></div>
+      <ul class="cli" id="listaCli"></ul>
+    </div>
+    <div class="card">
+      <button class="sec" id="exportarCli">Exportar (.json)</button>
+      <button class="sec" id="importarCli">Importar (.json)</button>
+      <input id="arqCli" type="file" accept="application/json,.json" style="display:none">
+      <p class="note">Os clientes ficam sincronizados na sua conta (nuvem Softia) e aparecem em todos os seus aparelhos. Vencendo em até 30 dias ficam no topo.</p>
+    </div>
+  </section>
+
+  <section id="viewAjuda" hidden>
+    <div class="card ajuda">
+      <h2>Como pegar o código do computador (Hardware ID)</h2>
+      <p class="sub" style="margin:4px 0 14px">A chave de licença é amarrada ao computador do cliente.
+        Primeiro o cliente te manda o ID do computador dele; você gera a chave para esse ID.</p>
+
+      <ol class="passos">
+        <li><b>No computador do cliente</b>, abra o app e vá no menu <b>Licença</b>
+          (em alguns aparece como <b>Licença e Assinatura</b>).</li>
+        <li>Lá aparece <b>“ID deste computador”</b> com um botão <b>Copiar</b> e um <b>QR Code</b>.</li>
+        <li>Jeito mais rápido: o cliente clica em <b>Copiar</b> (ou em <b>Renovar licença</b>, que já
+          monta a mensagem) e te manda o ID pelo <b>WhatsApp</b>.</li>
+        <li>Aqui no gerador, na aba <b>Emitir</b>, cole o ID no campo <b>Hardware ID</b> —
+          ou toque em <b>📷 Ler QR da tela do cliente</b> e aponte a câmera para o QR. O ID entra sozinho,
+          já no produto certo.</li>
+      </ol>
+
+      <div class="note" style="color:var(--fg); border-color:var(--ac)">
+        <b>Importante — uma licença por computador</b><br>
+        Cada computador tem <b>um</b> ID fixo e recebe <b>uma</b> chave. Plano de 3 máquinas =
+        3 chaves, uma para o ID de cada computador.
+      </div>
+
+      <div class="note">
+        <b>Cliente novo:</b> instale e ative no <b>notebook/computador que ele vai usar de verdade</b> —
+        o ID nasce ali. O ID é <b>estável</b> (vem do identificador do Windows e fica gravado), não muda
+        com WiFi, Bluetooth nem pendrive espetado.
+      </div>
+
+      <details style="margin-top:14px">
+        <summary>Por que não usar uma foto antiga do ID</summary>
+        <p style="font-size:.86rem; color:var(--mut); margin-top:8px">
+          No passado um app chegou a usar um ID que mudava com a rede/pendrive, e a licença parecia
+          “sumir” (o cliente via o teste de novo). Isso foi corrigido — hoje o ID é fixo. Mesmo assim,
+          <b>sempre gere a chave para o ID que o cliente mostra agora na tela de Licença</b>, nunca de
+          uma foto ou print antigo: se não bater, a chave não ativa naquela máquina.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <div id="edOverlay">
+    <div class="edmodal">
+      <h2 id="edTit">Novo cliente</h2>
+      <label for="edNome">Cliente / empresa</label>
+      <input id="edNome" autocapitalize="words" placeholder="ex.: Mota &amp; Mota — Celio">
+      <div class="edrow">
+        <div><label for="edProduto">Produto</label><input id="edProduto" list="prodListEd" autocapitalize="words" placeholder="AquaGest…"></div>
+        <div><label for="edCidade">Cidade</label><input id="edCidade" autocapitalize="words"></div>
+      </div>
+      <datalist id="prodListEd"></datalist>
+      <div class="edrow">
+        <div><label for="edPlano">Plano</label><input id="edPlano" placeholder="Profissional"></div>
+        <div><label for="edValor">Valor/ano (R$)</label><input id="edValor" type="number" inputmode="decimal" step="0.01" min="0"></div>
+      </div>
+      <div class="edrow">
+        <div><label for="edVenc">Vence em</label><input id="edVenc" type="date"></div>
+        <div><label for="edContato">WhatsApp</label><input id="edContato" inputmode="tel" placeholder="(34) 9 9999-9999"></div>
+      </div>
+      <label for="edObs">Observações</label>
+      <textarea id="edObs" rows="2"></textarea>
+      <button id="edSalvar">Salvar</button>
+      <button id="edCancel" class="sec">Cancelar</button>
+      <button id="edDel" class="sec" hidden style="color:var(--err)">Remover da lista</button>
+    </div>
   </div>
 </div>
 
@@ -295,6 +479,38 @@ const PRODUTOS = {
       trial:        { nome: 'Teste',                nome_curto: 'Teste', maquinas: 1, usuarios: 2, dias: 14 },
     },
   },
+  repgest: {
+    nome: 'RepGest',
+    // Confirmada em repgest/electron/modules/licensing.js e license-manager/public-key.pem.
+    pub: 'MCowBQYDK2VwAyEAn60JbGJLk11UVSNSjULPXrU8pbZaNfRRvlfFmyWEimI=',
+    planos: {
+      basico:       { nome: 'RepGest Básico',       maquinas: 1,  usuarios: 2,  dias: 365 },
+      profissional: { nome: 'RepGest Profissional', maquinas: 3,  usuarios: 5,  dias: 365 },
+      premium:      { nome: 'RepGest Premium',      maquinas: 99, usuarios: 99, dias: 365 },
+      trial:        { nome: 'Teste',                nome_curto: 'Teste', maquinas: 1, usuarios: 2, dias: 14 },
+    },
+  },
+  fitgest: {
+    nome: 'FitGest',
+    // Confirmada em fitgest/electron/modules/licensing.js:15; private-key.pem casa (testado).
+    pub: 'MCowBQYDK2VwAyEA6NygvWKEQ//szhFEaQ/NGVaFRCRAr69m6loJy8noh5I=',
+    planos: {
+      basico:       { nome: 'FitGest Básico',       maquinas: 1,  usuarios: 2,  dias: 365 },
+      profissional: { nome: 'FitGest Profissional', maquinas: 3,  usuarios: 5,  dias: 365 },
+      premium:      { nome: 'FitGest Premium',      maquinas: 99, usuarios: 99, dias: 365 },
+      trial:        { nome: 'Teste',                nome_curto: 'Teste', maquinas: 1, usuarios: 2, dias: 14 },
+    },
+  },
+  vendasgest: {
+    nome: 'VendasGest',
+    pub: 'MCowBQYDK2VwAyEAn60JbGJLk11UVSNSjULPXrU8pbZaNfRRvlfFmyWEimI=',
+    planos: {
+      basico:       { nome: 'VendasGest Básico',       maquinas: 1,  usuarios: 2,  dias: 365 },
+      profissional: { nome: 'VendasGest Profissional', maquinas: 3,  usuarios: 5,  dias: 365 },
+      premium:      { nome: 'VendasGest Premium',      maquinas: 99, usuarios: 99, dias: 365 },
+      trial:        { nome: 'Teste',                   nome_curto: 'Teste', maquinas: 1, usuarios: 2, dias: 14 },
+    },
+  },
 };
 
 const b64url = b => btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -314,6 +530,8 @@ function pubFromSeed(seed) {
 let produto = 'aquagest';
 const chavePK = p => 'softia_pk_' + p;
 const STORE_HIST = 'softia_hist';
+const STORE_CLI = 'softia_clientes';
+const AVISO_DIAS = 30; // vence em até 30 dias → selo de atenção
 
 function setProduto(p) {
   produto = p;
@@ -453,7 +671,9 @@ $('gerar').onclick = () => {
     const msg = new TextEncoder().encode(payload);
     const chave = b64url(msg) + '.' + b64url(sign(msg, seed));
 
-    ultima = { chave, produto, produtoNome: PRODUTOS[produto].nome, hwid, plano: plano.nome, exp, dias, em: new Date().toISOString() };
+    const nome = $('nome').value.trim();
+    ultima = { chave, produto, produtoNome: PRODUTOS[produto].nome, hwid, nome,
+               planoId, plano: plano.nome, exp, dias, em: new Date().toISOString() };
     $('chave').textContent = chave;
     $('meta').innerHTML = `<b>${plano.nome}</b> — ${plano.maquinas > 90 ? 'ilimitado' : plano.maquinas + ' máq.'} / ` +
       `${plano.usuarios > 90 ? 'ilimitado' : plano.usuarios + ' usuários'}<br>` +
@@ -461,6 +681,7 @@ $('gerar').onclick = () => {
       `Expira em <b>${new Date(exp).toLocaleDateString('pt-BR')}</b> (${dias} dias)`;
     $('out').classList.add('on');
     salvarHistorico(ultima);
+    salvarCliente(ultima);
     $('out').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) {
     $('erro').textContent = e.message;
@@ -530,6 +751,359 @@ $('limpar').onclick = () => {
   }
 };
 
+/* ---------- Clientes & nuvem Softia ---------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const brl = n => (Number(n)||0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+const fdata = v => v ? new Date(v+'T00:00:00').toLocaleDateString('pt-BR') : '';
+
+let CLI = null; // cache em memória (linhas no formato da tabela Supabase)
+function lerCache(){ try { return JSON.parse(localStorage.getItem(STORE_CLI) || '[]'); } catch { return []; } }
+function gravarCache(){ try { localStorage.setItem(STORE_CLI, JSON.stringify(CLI||[])); } catch(e){} }
+function lerClientes(){ if (!CLI) CLI = lerCache(); return CLI; }
+
+/* alterações feitas offline — reaplica quando a nuvem voltar */
+function filaLer(){ try { return JSON.parse(localStorage.getItem('lic_fila') || '[]'); } catch { return []; } }
+function filaAdd(op){ const f = filaLer(); f.push(op); try { localStorage.setItem('lic_fila', JSON.stringify(f)); } catch(e){} }
+async function sincronizarFila(){
+  const f = filaLer(); if (!f.length || !window.__sb || !navigator.onLine) return;
+  for (const op of f) {
+    try {
+      if (op.tipo === 'del') await __sb.from('clientes').delete().eq('id', op.id);
+      else if (op.row.id) await __sb.from('clientes').update(op.row).eq('id', op.row.id);
+      else await __sb.from('clientes').insert(op.row);
+    } catch(e){ return; } // mantém a fila para a próxima tentativa
+  }
+  try { localStorage.removeItem('lic_fila'); } catch(e){}
+}
+
+async function carregarNuvem(){
+  if (window.__sb && navigator.onLine) {
+    try {
+      await sincronizarFila();
+      const { data, error } = await __sb.from('clientes').select('*');
+      if (error) throw error;
+      CLI = data; gravarCache();
+    } catch(e){ CLI = lerCache(); }
+  } else { CLI = lerCache(); }
+  renderClientes();
+}
+
+/* grava uma linha (insert/update) com fallback offline + fila */
+async function persistir(prev, row){
+  if (window.__sb && navigator.onLine) {
+    try {
+      if (prev && prev.id && !String(prev.id).startsWith('tmp_')) {
+        const { error } = await __sb.from('clientes').update(row).eq('id', prev.id); if (error) throw error;
+        Object.assign(prev, row);
+      } else {
+        const { data, error } = await __sb.from('clientes').insert(row).select().single(); if (error) throw error;
+        if (prev) Object.assign(prev, data); else lerClientes().push(data);
+      }
+      gravarCache(); renderClientes(); return true;
+    } catch(e){ toast('Erro ao salvar na nuvem — guardado localmente'); }
+  }
+  if (prev) { Object.assign(prev, row); filaAdd({ tipo:'upsert', row:{ ...row, id: prev.id } }); }
+  else { const tmp = { ...row, id: 'tmp_'+Date.now().toString(36) }; lerClientes().push(tmp); filaAdd({ tipo:'upsert', row:{ ...row } }); }
+  gravarCache(); renderClientes();
+  if (!navigator.onLine) toast('Salvo offline — sincroniza ao reconectar');
+  return false;
+}
+
+/* Upsert vindo da emissão (mantém 1 linha por produto+HWID). */
+async function salvarCliente(item){
+  const nomeProd = item.produtoNome || item.produto;
+  const prev = item.hwid ? lerClientes().find(c => c.produto === nomeProd && c.hwid === item.hwid) : null;
+  const row = {
+    nome: item.nome || (prev ? prev.nome : '') || '',
+    produto: nomeProd, hwid: item.hwid || '',
+    plano: item.plano, plano_id: item.planoId,
+    vencimento: item.exp ? item.exp.slice(0,10) : (prev ? prev.vencimento : null),
+    chave: item.chave, ativacao: new Date().toISOString(),
+    renovacoes: prev ? (prev.renovacoes||0) + 1 : 0,
+    origem: prev ? prev.origem : 'Manual', atualizado_em: new Date().toISOString(),
+  };
+  await persistir(prev, row);
+}
+
+async function removerCliente(c){
+  const arr = lerClientes();
+  const i = arr.findIndex(x => String(x.id) === String(c.id)); if (i >= 0) arr.splice(i, 1);
+  gravarCache(); renderClientes();
+  if (String(c.id).startsWith('tmp_')) return;
+  if (window.__sb && navigator.onLine) { try { await __sb.from('clientes').delete().eq('id', c.id); } catch(e){ filaAdd({ tipo:'del', id:c.id }); } }
+  else filaAdd({ tipo:'del', id:c.id });
+}
+
+function diasRest(v){ if (!v) return null; return Math.ceil((new Date(v+'T00:00:00').getTime() - Date.now()) / 86400000); }
+function statusCliente(v){
+  const d = diasRest(v);
+  if (d == null) return { cat:'semdata', cls:'mut', txt:'Sem data', rank:3, d:Infinity };
+  if (d < 0)  return { cat:'vencido',  cls:'err',  txt:`Vencido há ${-d} dia${-d>1?'s':''}`, rank:0, d };
+  if (d === 0) return { cat:'vencendo', cls:'err',  txt:'Vence hoje', rank:1, d };
+  if (d <= AVISO_DIAS) return { cat:'vencendo', cls:'warn', txt:`Vence em ${d} dia${d>1?'s':''}`, rank:1, d };
+  return { cat:'ativo', cls:'ok', txt:`Ativo · ${d} dias`, rank:2, d };
+}
+
+function renderClientes(){
+  const arr = lerClientes();
+  $('pillCli').textContent = arr.length;
+
+  const comStatus = arr.map(c => ({ c, s: statusCliente(c.vencimento) }))
+    .sort((a, b) => a.s.rank - b.s.rank || a.s.d - b.s.d);
+
+  const cont = { vencido:0, vencendo:0, ativo:0, semdata:0 }; let receita = 0;
+  comStatus.forEach(x => { cont[x.s.cat]++; if (x.s.cat !== 'vencido') receita += Number(x.c.valor)||0; });
+  $('resumo').innerHTML =
+    `<span class="chip"><b>${arr.length}</b> clientes</span>` +
+    `<span class="chip" style="color:var(--err)"><b>${cont.vencido}</b> vencidos</span>` +
+    `<span class="chip" style="color:var(--warn)"><b>${cont.vencendo}</b> vencendo</span>` +
+    `<span class="chip" style="color:var(--ok)"><b>${cont.ativo + cont.semdata}</b> ativos</span>` +
+    `<span class="chip" style="color:var(--ouro)"><b>${brl(receita)}</b>/ano</span>`;
+
+  const fp = $('filtroProduto'); const selP = fp.value;
+  const prods = [...new Set(arr.map(c => c.produto).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  fp.innerHTML = '<option value="">Todos produtos</option>' + prods.map(p => `<option${p===selP?' selected':''}>${esc(p)}</option>`).join('');
+
+  const termo = $('busca').value.trim().toLowerCase();
+  const filtro = $('filtroStatus').value;
+  const vis = comStatus.filter(({ c, s }) => {
+    if (selP && c.produto !== selP) return false;
+    if (filtro && filtro !== 'todos' && s.cat !== filtro) return false;
+    if (!termo) return true;
+    return ((c.nome||'')+' '+(c.produto||'')+' '+(c.cidade||'')+' '+(c.plano||'')+' '+(c.obs||'')).toLowerCase().includes(termo);
+  });
+
+  if (!vis.length) {
+    $('listaCli').innerHTML = `<li class="vazio">${arr.length ? 'Nenhum cliente neste filtro.' : 'Nenhum cliente ainda. Emita uma licença ou toque em + Novo.'}</li>`;
+    return;
+  }
+  $('listaCli').innerHTML = vis.map(({ c, s }) => `
+    <li data-id="${esc(c.id)}">
+      <div class="top">
+        <div style="min-width:0">
+          <div class="nome">${esc(c.nome) || '<span style="color:var(--mut)">(sem nome)</span>'}</div>
+          <div class="det">${esc(c.produto)||'—'}${c.plano?' · '+esc(c.plano):''}${c.cidade?' · '+esc(c.cidade):''}${c.vencimento?' · vence '+fdata(c.vencimento):''}${c.renovacoes?' · '+c.renovacoes+'ª renov.':''}</div>
+          ${(Number(c.valor)>0||c.contato)?`<div class="det">${Number(c.valor)>0?'<b>'+brl(c.valor)+'</b>/ano':''}${c.contato?((Number(c.valor)>0?' · ':'')+esc(c.contato)):''}</div>`:''}
+          ${c.conferir?'<div class="det" style="color:var(--warn)">⚠ conferir — preço/data/contato</div>':''}
+          ${c.hwid?`<code>…${esc(String(c.hwid).slice(-16))}</code>`:''}
+        </div>
+        <span class="selo ${s.cls}">${s.txt}</span>
+      </div>
+      <div class="acoes">
+        <button data-a="editar">Editar</button>
+        ${c.hwid?'<button data-a="renovar">🔁 Renovar</button>':''}
+        ${c.chave?'<button class="sec" data-a="copiar">Copiar chave</button>':''}
+        ${c.contato?'<button class="sec" data-a="zap">WhatsApp</button>':''}
+        <button class="sec" data-a="remover">Remover</button>
+      </div>
+    </li>`).join('');
+}
+
+$('busca').oninput = renderClientes;
+$('filtroStatus').onchange = renderClientes;
+$('filtroProduto').onchange = renderClientes;
+
+$('listaCli').onclick = e => {
+  const btn = e.target.closest('button[data-a]'); if (!btn) return;
+  const li = e.target.closest('li[data-id]');
+  const c = lerClientes().find(x => String(x.id) === li.dataset.id); if (!c) return;
+  const a = btn.dataset.a;
+  if (a === 'copiar') { copiar(c.chave, btn); return; }
+  if (a === 'zap') { abrirZap(c); return; }
+  if (a === 'remover') {
+    if (confirm(`Remover ${c.nome || 'este cliente'} (${c.produto}) do controle?\nNão cancela a licença já emitida.`)) removerCliente(c);
+    return;
+  }
+  if (a === 'editar') abrirEditar(c);
+  if (a === 'renovar') prepararRenovacao(c);
+};
+
+function abrirZap(c){
+  const tel = String(c.contato||'').replace(/\D/g,''); const alvo = tel ? (tel.length<=11?'55'+tel:tel) : '';
+  const msg = `Olá! Aqui é da Softia sobre sua licença do ${c.produto||'sistema'}.` +
+    (c.vencimento?` Ela ${diasRest(c.vencimento)<0?'venceu':'vence'} em ${fdata(c.vencimento)}.`:'') +
+    (c.chave?`\n\n${c.chave}`:'');
+  window.open('https://wa.me/'+alvo+'?text='+encodeURIComponent(msg), '_blank');
+}
+
+/* Editor manual (nome, preço, contato, data, obs) */
+let edId = null;
+function abrirEditar(c){
+  edId = c ? c.id : null;
+  $('edTit').textContent = c ? 'Editar cliente' : 'Novo cliente';
+  $('edNome').value = c?.nome || ''; $('edProduto').value = c?.produto || '';
+  $('edCidade').value = c?.cidade || ''; $('edPlano').value = c?.plano || '';
+  $('edValor').value = (c && c.valor) ? c.valor : ''; $('edVenc').value = c?.vencimento || '';
+  $('edContato').value = c?.contato || ''; $('edObs').value = c?.obs || '';
+  $('edDel').hidden = !c;
+  $('edOverlay').classList.add('on');
+  setTimeout(()=>$('edNome').focus(), 30);
+}
+function fecharEditar(){ $('edOverlay').classList.remove('on'); edId = null; }
+$('novoCli').onclick = () => abrirEditar(null);
+$('edCancel').onclick = fecharEditar;
+$('edOverlay').addEventListener('click', e => { if (e.target === $('edOverlay')) fecharEditar(); });
+$('edSalvar').onclick = async () => {
+  const nome = $('edNome').value.trim(), produto = $('edProduto').value.trim();
+  if (!nome && !produto) { alert('Informe ao menos o nome ou o produto.'); return; }
+  const prev = edId ? lerClientes().find(x => x.id === edId) : null;
+  const row = {
+    nome, produto, cidade: $('edCidade').value.trim(), plano: $('edPlano').value.trim(),
+    valor: parseFloat($('edValor').value) || 0, vencimento: $('edVenc').value || null,
+    contato: $('edContato').value.trim(), obs: $('edObs').value.trim(),
+    conferir: false, origem: prev ? prev.origem : 'Manual', atualizado_em: new Date().toISOString(),
+  };
+  await persistir(prev, row); fecharEditar();
+};
+$('edDel').onclick = () => { const c = lerClientes().find(x => x.id === edId); if (c) { removerCliente(c); fecharEditar(); } };
+
+/** Renovação: reabre o emissor já preenchido (gera nova chave). */
+function prepararRenovacao(c){
+  trocarModo('emitir');
+  const prodKey = Object.keys(PRODUTOS).find(k => PRODUTOS[k].nome.toLowerCase() === String(c.produto).toLowerCase());
+  if (prodKey) setProduto(prodKey);
+  $('nome').value = c.nome || '';
+  $('hw').value = c.hwid || '';
+  if (prodKey) {
+    const planoId = PRODUTOS[prodKey].planos[c.plano_id] ? c.plano_id : 'profissional';
+    $('plano').value = planoId;
+    $('dias').value = PRODUTOS[prodKey].planos[planoId].dias;
+  }
+  $('erro').textContent = ''; $('out').classList.remove('on');
+  $('gerar').scrollIntoView({ behavior:'smooth', block:'center' });
+  const g = $('gerar'); const r = g.textContent;
+  g.textContent = 'Gerar chave de renovação'; g.style.outline = '2px solid var(--ouro)';
+  setTimeout(() => { g.textContent = r; g.style.outline = ''; }, 4000);
+}
+
+/* Backup local (export/import .json) */
+$('exportarCli').onclick = () => {
+  const blob = new Blob([JSON.stringify(lerClientes(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `softia-clientes-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('importarCli').onclick = () => $('arqCli').click();
+$('arqCli').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const novos = JSON.parse(r.result);
+      if (!Array.isArray(novos)) throw new Error('inválido');
+      for (const n of novos) {
+        if (!n) continue;
+        const prev = lerClientes().find(x => x.id === n.id || (n.hwid && x.produto === n.produto && x.hwid === n.hwid));
+        const row = {
+          nome: n.nome||'', produto: n.produto||'', cidade: n.cidade||'', plano: n.plano||'',
+          valor: Number(n.valor)||0, vencimento: n.vencimento||null, contato: n.contato||'', obs: n.obs||'',
+          hwid: n.hwid||'', chave: n.chave||null, origem: n.origem||'Manual', conferir: !!n.conferir,
+          atualizado_em: new Date().toISOString(),
+        };
+        await persistir(prev, row);
+      }
+      alert('Importação concluída.');
+    } catch { alert('Não consegui ler este arquivo .json.'); }
+    e.target.value = '';
+  };
+  r.readAsText(f);
+};
+
+/* ---------- Alternador de telas ---------- */
+function trocarModo(m) {
+  document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+  $('viewEmitir').hidden = m !== 'emitir';
+  $('viewClientes').hidden = m !== 'clientes';
+  $('viewAjuda').hidden = m !== 'ajuda';
+  if (m === 'clientes') renderClientes(); // datas mudam a cada dia → sempre recalcula
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('modes').onclick = e => {
+  const b = e.target.closest('button[data-mode]');
+  if (b) trocarModo(b.dataset.mode);
+};
+
+/* ---------- Conta / login (nuvem Softia) ---------- */
+const SB_URL = 'https://pejenerpdxxaxakazjpv.supabase.co';
+const SB_KEY = 'sb_publishable_2VL7R01e19AKQQEY7qiQqQ_rssCfGKR';
+window.__sb = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } })
+  : null;
+
+function toast(m){
+  let t = $('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = m; t.classList.add('on');
+  clearTimeout(t._); t._ = setTimeout(() => t.classList.remove('on'), 2800);
+}
+
+// sugestões de produto no editor manual
+(function(){
+  const dl = $('prodListEd'); if (!dl) return;
+  const nomes = [...Object.values(PRODUTOS).map(p => p.nome), 'PrataGest', 'KitGest', 'BemTeVi', 'VendaGest', 'GastroGest', 'MobiGest'];
+  [...new Set(nomes)].forEach(n => { const o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+})();
+
+function mostrarLogin(msg){ $('login').hidden = false; $('btnSair').hidden = true; if (msg) $('loginMsg').textContent = msg; }
+function esconderLogin(){ $('login').hidden = true; $('btnSair').hidden = false; }
+
+async function checarAdmin(){
+  if (!navigator.onLine || !__sb) return localStorage.getItem('lic_isadmin') === '1';
+  try {
+    const { data } = await __sb.rpc('is_admin');
+    const ok = !!data; try { localStorage.setItem('lic_isadmin', ok ? '1' : '0'); } catch(e){}
+    return ok;
+  } catch(e){ return localStorage.getItem('lic_isadmin') === '1'; }
+}
+
+async function entrarApp(email){
+  esconderLogin();
+  $('hsub').textContent = (email ? email + ' · ' : '') + 'nuvem sincronizada';
+  await carregarNuvem();
+}
+
+async function iniciarAuth(){
+  if (!__sb) { $('login').hidden = true; renderClientes(); return; } // sem lib (offline): usa cache
+  let session = null;
+  try { session = (await __sb.auth.getSession()).data.session; } catch(e){}
+  if (!session) { mostrarLogin(); renderClientes(); return; }
+  const admin = await checarAdmin();
+  if (!admin) { mostrarLogin('Esta conta (' + (session.user.email||'') + ') não tem acesso. Fale com o Regim.'); try { await __sb.auth.signOut(); } catch(e){} return; }
+  entrarApp(session.user.email);
+}
+
+async function fazerLogin(){
+  const email = $('liEmail').value.trim(), senha = $('liSenha').value;
+  $('liMsg').textContent = '';
+  if (!email || !senha) { $('liMsg').textContent = 'Informe e-mail e senha.'; return; }
+  $('liEntrar').disabled = true;
+  const { data, error } = await __sb.auth.signInWithPassword({ email, password: senha });
+  $('liEntrar').disabled = false;
+  if (error) { $('liMsg').textContent = /confirm/i.test(error.message) ? 'Confirme seu e-mail primeiro (veja o link enviado).' : 'E-mail ou senha inválidos.'; return; }
+  const admin = await checarAdmin();
+  if (!admin) { $('liMsg').textContent = 'Conta sem acesso. Fale com o Regim.'; try { await __sb.auth.signOut(); } catch(e){} return; }
+  entrarApp(data.user.email);
+}
+async function criarConta(){
+  const email = $('liEmail').value.trim(), senha = $('liSenha').value;
+  if (!email || senha.length < 6) { $('liMsg').textContent = 'E-mail válido e senha de 6+ caracteres.'; return; }
+  $('liCriar').disabled = true;
+  const { error } = await __sb.auth.signUp({ email, password: senha });
+  $('liCriar').disabled = false;
+  $('liMsg').textContent = error ? ('Erro: ' + error.message) : 'Conta criada! Confirme pelo link no seu e-mail e depois entre.';
+}
+if ($('liEntrar')) { $('liEntrar').onclick = fazerLogin; }
+if ($('liCriar')) { $('liCriar').onclick = criarConta; }
+if ($('liSenha')) { $('liSenha').addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); }); }
+$('btnSair').onclick = async () => {
+  try { await __sb.auth.signOut(); } catch(e){}
+  try { localStorage.removeItem('lic_isadmin'); } catch(e){}
+  CLI = []; renderClientes(); mostrarLogin('Você saiu.');
+};
+window.addEventListener('online', () => { if (__sb) carregarNuvem(); });
+
 /* ---------- Início ---------- */
 const params = new URLSearchParams(location.search);
 if (params.get('p') && PRODUTOS[params.get('p').toLowerCase()]) setProduto(params.get('p').toLowerCase());
@@ -540,6 +1114,7 @@ if (params.get('hw')) {
   history.replaceState(null, '', location.pathname);
 }
 render();
+iniciarAuth();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
