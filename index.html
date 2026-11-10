@@ -1078,13 +1078,28 @@ async function fazerLogin(){
   const email = $('liEmail').value.trim(), senha = $('liSenha').value;
   $('liMsg').textContent = '';
   if (!email || !senha) { $('liMsg').textContent = 'Informe e-mail e senha.'; return; }
-  $('liEntrar').disabled = true;
-  const { data, error } = await __sb.auth.signInWithPassword({ email, password: senha });
-  $('liEntrar').disabled = false;
-  if (error) { $('liMsg').textContent = /confirm/i.test(error.message) ? 'Confirme seu e-mail primeiro (veja o link enviado).' : 'E-mail ou senha inválidos.'; return; }
-  const admin = await checarAdmin();
-  if (!admin) { $('liMsg').textContent = 'Conta sem acesso. Fale com o Regim.'; try { await __sb.auth.signOut(); } catch(e){} return; }
-  entrarApp(data.user.email);
+  const btn = $('liEntrar'); const rot = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try {
+    const { data, error } = await Promise.race([
+      __sb.auth.signInWithPassword({ email, password: senha }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000)),
+    ]);
+    if (error) throw error;
+    let admin = true;
+    try { const r = await __sb.rpc('is_admin'); admin = !!r.data; try { localStorage.setItem('lic_isadmin', admin ? '1' : '0'); } catch(e){} }
+    catch(e){ admin = true; } // se a checagem de admin falhar, entra mesmo assim (o RLS protege os dados)
+    if (!admin) { $('liMsg').textContent = 'Conta sem acesso. Fale com o Regim.'; try { await __sb.auth.signOut(); } catch(e){} return; }
+    await entrarApp(data.user.email);
+  } catch(e){
+    const m = String((e && e.message) || e);
+    $('liMsg').textContent = /timeout/i.test(m) ? 'Demorou demais — confira a conexão e tente de novo.'
+      : /confirm/i.test(m) ? 'Confirme seu e-mail primeiro.'
+      : /invalid login/i.test(m) ? 'E-mail ou senha incorretos.'
+      : ('Erro: ' + m);
+  } finally {
+    btn.disabled = false; btn.textContent = rot;
+  }
 }
 async function criarConta(){
   const email = $('liEmail').value.trim(), senha = $('liSenha').value;

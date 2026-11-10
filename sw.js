@@ -5,7 +5,7 @@
  * licenças sem rede nenhuma — que é o cenário real (loja do cliente, sinal ruim).
  * A rede só é consultada em segundo plano, para pegar versões novas.
  */
-const CACHE = 'softia-licencas-v5';
+const CACHE = 'softia-licencas-v6';
 const ARQUIVOS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -20,19 +20,30 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+function guardar(req, resp) {
+  if (resp && resp.status === 200 && resp.type === 'basic') {
+    const copia = resp.clone();
+    caches.open(CACHE).then((c) => c.put(req, copia));
+  }
+  return resp;
+}
+
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const req = e.request;
+  const ehHTML = req.mode === 'navigate' || req.destination === 'document';
+  if (ehHTML) {
+    // Rede primeiro para o app: pega atualizações na hora; cai pro cache offline.
+    e.respondWith(
+      fetch(req).then((resp) => guardar(req, resp))
+        .catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
+    );
+    return;
+  }
+  // Demais recursos: cache primeiro (ícones, manifest).
   e.respondWith(
-    caches.match(e.request).then((cacheado) => {
-      const rede = fetch(e.request)
-        .then((resp) => {
-          if (resp && resp.status === 200 && resp.type === 'basic') {
-            const copia = resp.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, copia));
-          }
-          return resp;
-        })
-        .catch(() => cacheado);
+    caches.match(req).then((cacheado) => {
+      const rede = fetch(req).then((resp) => guardar(req, resp)).catch(() => cacheado);
       return cacheado || rede;
     })
   );
